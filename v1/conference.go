@@ -13,6 +13,11 @@ import (
 	user "google.golang.org/api/oauth2/v2"
 )
 
+const (
+	primaryCalendarId = "primary"
+	googleMeetDomain  = "https://meet.google.com"
+)
+
 // Conference is struct for api call response data
 type Conference struct {
 	URL string `json:"url,omitempty"`
@@ -80,7 +85,7 @@ func (c *ConferenceCreateCall) Do() (*Conference, error) {
 	}
 
 	event := &calendar.Event{
-		Summary: "Temporary Event (will be deleted immediately)",
+		Summary: "Temporal Event (will be deleted immediately)",
 		Start: &calendar.EventDateTime{
 			DateTime: time.Now().Format(time.RFC3339),
 		},
@@ -99,15 +104,15 @@ func (c *ConferenceCreateCall) Do() (*Conference, error) {
 		},
 	}
 
-	ret, err := c.calendar.Events.Insert("primary", event).
+	ret, err := c.calendar.Events.Insert(primaryCalendarId, event).
 		ConferenceDataVersion(1).
 		Context(ctx).
 		Do()
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to insert temporary event")
 	}
-	// make sure temporary should be deleted
-	defer c.calendar.Events.Delete("primary", ret.Id).Do()
+	// make sure temporal event should be deleted
+	defer c.calendar.Events.Delete(primaryCalendarId, ret.Id).Do()
 
 	var meetURL string
 	if ret.ConferenceData != nil {
@@ -115,7 +120,7 @@ func (c *ConferenceCreateCall) Do() (*Conference, error) {
 			if entry.EntryPointType != "video" {
 				continue
 			}
-			if strings.HasPrefix(entry.Uri, "https://meet.google.com") {
+			if strings.HasPrefix(entry.Uri, googleMeetDomain) {
 				meetURL = entry.Uri
 			}
 		}
