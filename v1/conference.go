@@ -74,7 +74,12 @@ func (c *ConferenceCreateCall) context() context.Context {
 	return context.Background()
 }
 
-// Execute API
+// Execute API call
+// To get new Google Meet URL, we need to do following steps:
+// 1. Create temporal calendar event with atend yourself
+// 2. Retrieve response from calendar created reponse (may contains Google Meet URL)
+// 3. Delete temporal event
+// 4. return Google Meet URL got on step.2
 func (c *ConferenceCreateCall) Do() (*Conference, error) {
 	ctx := c.context()
 
@@ -111,7 +116,7 @@ func (c *ConferenceCreateCall) Do() (*Conference, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to insert temporary event")
 	}
-	// make sure temporal event should be deleted
+	// Temporal event should be deleted
 	defer c.calendar.Events.Delete(primaryCalendarId, ret.Id).Do()
 
 	var meetURL string
